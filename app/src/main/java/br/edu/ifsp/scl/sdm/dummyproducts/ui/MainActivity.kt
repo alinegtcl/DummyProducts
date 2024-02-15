@@ -41,22 +41,43 @@ class MainActivity : AppCompatActivity() {
         retrieveProducts()
     }
 
-    private fun retrieveProducts() {
+    private fun retrieveProducts() = Thread {
         val productsConnection = URL(PRODUCTS_ENDPOINT).openConnection() as HttpURLConnection
         try {
             if (productsConnection.responseCode == HTTP_OK) {
                 InputStreamReader(productsConnection.inputStream).readText().let {
-                    productAdapter.addAll(Gson().fromJson(it, ProductList::class.java).products)
+                    runOnUiThread {
+                        productAdapter.addAll(Gson().fromJson(it, ProductList::class.java).products)
+                    }
                 }
             } else {
-                Toast.makeText(this, getString(R.string.request_problem), Toast.LENGTH_SHORT).show()
+                runOnUiThread {
+                    Toast.makeText(
+                        this,
+                        getString(R.string.request_problem),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
         } catch (ioe: IOException) {
-            Toast.makeText(this, getString(R.string.connection_failed), Toast.LENGTH_SHORT).show()
+            runOnUiThread {
+                Toast.makeText(
+                    this,
+                    getString(R.string.connection_failed),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
         } catch (jse: JsonSyntaxException) {
-            Toast.makeText(this, getString(R.string.response_problem), Toast.LENGTH_SHORT).show()
+            runOnUiThread {
+                Toast.makeText(
+                    this,
+                    getString(R.string.response_problem),
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
         } finally {
             productsConnection.disconnect()
         }
-    }
+    }.start()
+
 }
