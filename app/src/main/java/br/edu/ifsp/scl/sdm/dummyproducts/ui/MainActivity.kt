@@ -14,11 +14,7 @@ import br.edu.ifsp.scl.sdm.dummyproducts.adapter.ProductImageAdapter
 import br.edu.ifsp.scl.sdm.dummyproducts.databinding.ActivityMainBinding
 import br.edu.ifsp.scl.sdm.dummyproducts.model.DummyJSONAPI
 import br.edu.ifsp.scl.sdm.dummyproducts.model.Product
-import br.edu.ifsp.scl.sdm.dummyproducts.model.ProductList
-import com.android.volley.Request
 import com.android.volley.toolbox.ImageRequest
-import com.android.volley.toolbox.StringRequest
-import com.google.gson.Gson
 
 class MainActivity : AppCompatActivity() {
     private val amb: ActivityMainBinding by lazy {
@@ -31,10 +27,6 @@ class MainActivity : AppCompatActivity() {
     private val productImageList: MutableList<Bitmap> = mutableListOf()
     private val productImageAdapter: ProductImageAdapter by lazy {
         ProductImageAdapter(this, productImageList)
-    }
-
-    companion object {
-        const val PRODUCTS_ENDPOINT = "https://dummyjson.com/products"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,11 +66,9 @@ class MainActivity : AppCompatActivity() {
         retrieveProducts()
     }
 
-    private fun retrieveProducts() = StringRequest(
-        Request.Method.GET,
-        PRODUCTS_ENDPOINT,
-        { response ->
-            Gson().fromJson(response, ProductList::class.java).products.also {
+    private fun retrieveProducts() =
+        DummyJSONAPI.ProductListRequest({ productList ->
+            productList.products.also {
                 productAdapter.addAll(it)
             }
         }, {
@@ -88,8 +78,9 @@ class MainActivity : AppCompatActivity() {
                 Toast.LENGTH_SHORT
             ).show()
         }).also {
-        DummyJSONAPI.getInstance(this).addToRequestQueue(it)
-    }
+            DummyJSONAPI.getInstance(this).addToRequestQueue(it)
+        }
+
 
 //    Primeira implementação com httpURLConnection
 //    private fun retrieveProducts() = Thread {
@@ -132,27 +123,27 @@ class MainActivity : AppCompatActivity() {
 //    }.start()
 
 
-    private fun retrieveProductImages(product: Product) = product.images.forEach { imageUrl ->
-        ImageRequest(
-            imageUrl,
-            { response ->
-                productImageList.add(response)
-                productImageAdapter.notifyItemInserted(productImageList.lastIndex)
-            },
-            0,
-            0,
-            ImageView.ScaleType.CENTER,
-            Bitmap.Config.ARGB_8888,
-            {
-                Toast.makeText(
-                    this,
-                    getString(R.string.request_problem),
-                    Toast.LENGTH_SHORT
-                ).show()
-            }).also {
-            DummyJSONAPI.getInstance(this).addToRequestQueue(it)
-        }
+private fun retrieveProductImages(product: Product) = product.images.forEach { imageUrl ->
+    ImageRequest(
+        imageUrl,
+        { response ->
+            productImageList.add(response)
+            productImageAdapter.notifyItemInserted(productImageList.lastIndex)
+        },
+        0,
+        0,
+        ImageView.ScaleType.CENTER,
+        Bitmap.Config.ARGB_8888,
+        {
+            Toast.makeText(
+                this,
+                getString(R.string.request_problem),
+                Toast.LENGTH_SHORT
+            ).show()
+        }).also {
+        DummyJSONAPI.getInstance(this).addToRequestQueue(it)
     }
+}
 //    Primeira implementação com httpURLConnection
 //    private fun retrieveProductImages(product: Product) = Thread {
 //        product.images.forEach { imageUrl ->
